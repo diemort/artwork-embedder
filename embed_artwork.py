@@ -241,16 +241,21 @@ def clean_album_art(root_path, album_title):
                 except Exception as e:
                     print(f"❌ Failed to clean artwork in {mp3.name}: {e}")
 
-def process_all_folders(root_path, band_name):
+def process_all_folders(root_path, band_name, target_album=None):
     root = Path(root_path)
     for folder in root.iterdir():
         if folder.is_dir():
+            album_name = clean_album_name(folder.name)
+            if target_album:
+                if album_name.lower() != target_album.lower():
+                    continue  # Skip non-matching folders
             process_album_folder(folder, band_name)
 
 def main():
     parser = argparse.ArgumentParser(description="Embed or clean album art in MP3 files.")
     parser.add_argument("--music-folder", type=str, required=True, help="Path to folder with album subfolders.")
     parser.add_argument("--band", type=str, help="Band name for album art search (used when embedding).")
+    parser.add_argument("--album", type=str, help="Only update artwork for this specific album (matches folder name).")
     parser.add_argument("--clean-album", type=str, help="Album name to clean (removes embedded artwork).")
 
     args = parser.parse_args()
@@ -258,7 +263,7 @@ def main():
     if args.clean_album:
         clean_album_art(args.music_folder, args.clean_album)
     elif args.band:
-        process_all_folders(args.music_folder, args.band)
+        process_all_folders(args.music_folder, args.band, target_album=args.album)
     else:
         print("❌ Please provide either --band for embedding or --clean-album for cleaning.")
 
