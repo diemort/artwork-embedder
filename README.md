@@ -1,4 +1,4 @@
-Artwork Embedder
+# Artwork Embedder
 
 Search iTunes and MusicBrainz for release albums and updates the art work in the ID3 tag in mp3 files.
 
