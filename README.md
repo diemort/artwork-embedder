@@ -11,7 +11,7 @@ The script loops over folders inside the specified `--music-folder`, using the f
 All required Python packages and system dependencies can be installed using:
 
 ```bash
-./setup_mp3_env.sh
+bash setup_mp3_env.sh
 ```
 
 The script detects your operating system and installs chromaprint, fpcalc, and the required Python modules in a virtual environment.
