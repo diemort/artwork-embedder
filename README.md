@@ -10,6 +10,8 @@ The necessary Python modules and applications can be automatically installed and
 
 ```python3 setup_mp3_env.sh```
 
+An API key is needed from AcoustID in case a fallback option is desired. This API key can be added to the header of the setup files or given as keyboard input.
+
 ## Usage:
 
 ```python3 embed_artwork.py --music-folder "<path-to-folder>" --band "<band-name>"```
