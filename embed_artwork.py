@@ -30,8 +30,6 @@ def recognize_with_acoustid(mp3_path):
 # Configure MusicBrainz
 musicbrainzngs.set_useragent("MP3AlbumArtTool", "1.0", "your-email@example.com")
 
-import requests
-
 def search_album_art_musicbrainz(band_name, album_name):
     """
     Search MusicBrainz for all releases that match the given band and album name.
@@ -86,6 +84,60 @@ def search_album_art_musicbrainz(band_name, album_name):
     except Exception as e:
         print(f"❌ MusicBrainz query failed: {e}")
         return None
+
+import requests
+from pathlib import Path
+
+def download_cover_from_musicbrainz_id(release_id, folder_path):
+    """
+    Try to download album art using both release ID and release-group fallback.
+    """
+    headers = {
+        "User-Agent": "MP3AlbumArtTool/1.0 (you@example.com)"
+    }
+
+    # Try the Cover Art Archive metadata endpoint first
+    meta_url = f"https://coverartarchive.org/release/{release_id}"
+    try:
+        meta_response = requests.get(meta_url, headers=headers, verify=False)
+        if meta_response.status_code == 200:
+            images = meta_response.json().get("images", [])
+            for img in images:
+                if img.get("front"):
+                    image_url = img.get("image")
+                    print(f"✅ Found cover image from metadata:\n{image_url}")
+                    break
+            else:
+                image_url = None
+        else:
+            image_url = None
+    except Exception as e:
+        print(f"⚠️ Could not get metadata from Cover Art Archive: {e}")
+        image_url = None
+
+    # If no image found via metadata, try standard fallback
+    if not image_url:
+        image_url = f"https://coverartarchive.org/release/{release_id}/front-500"
+        print(f"🔁 Falling back to standard front-500 URL:\n{image_url}")
+
+    try:
+        response = requests.get(image_url, headers=headers, verify=False)
+        response.raise_for_status()
+        image_data = response.content
+    except Exception as e:
+        print(f"❌ Failed to download artwork: {e}")
+        return
+
+    # Embed into MP3 files
+    folder = Path(folder_path)
+    mp3_files = list(folder.rglob("*.mp3"))
+    if not mp3_files:
+        print(f"🚫 No MP3 files found in {folder}")
+        return
+
+    print(f"🎨 Embedding artwork into {len(mp3_files)} files in {folder.name}...")
+    for mp3 in mp3_files:
+        embed_artwork(mp3, image_data, "")  # no artist check needed
 
 def search_album_art(query, expected_artist=None):
     try:
@@ -257,15 +309,35 @@ def main():
     parser.add_argument("--band", type=str, help="Band name for album art search (used when embedding).")
     parser.add_argument("--album", type=str, help="Only update artwork for this specific album (matches folder name).")
     parser.add_argument("--clean-album", type=str, help="Album name to clean (removes embedded artwork).")
+    parser.add_argument("--brainz", type=str, help="MusicBrainz release ID to embed artwork directly from Cover Art Archive.")
 
     args = parser.parse_args()
 
-    if args.clean_album:
+    if args.brainz:
+        if not args.album:
+            print("❌ Please provide --album along with --brainz.")
+            exit(1)
+    
+        album_target = args.album.lower().strip()
+        root = Path(args.music_folder)
+        for folder in root.iterdir():
+            if folder.is_dir():
+                normalized = clean_album_name(folder.name).lower()
+                if normalized == album_target:
+                    download_cover_from_musicbrainz_id(args.brainz, folder)
+                    break
+        else:
+            print(f"❌ Album '{args.album}' not found in {args.music_folder}")
+            exit(1)
+    
+    elif args.clean_album:
         clean_album_art(args.music_folder, args.clean_album)
+    
     elif args.band:
         process_all_folders(args.music_folder, args.band, target_album=args.album)
+    
     else:
-        print("❌ Please provide either --band for embedding or --clean-album for cleaning.")
+        print("❌ Please provide --band for embedding, --clean-album for cleaning, or --brainz with --album for MusicBrainz embedding.")
 
 if __name__ == "__main__":
     main()
