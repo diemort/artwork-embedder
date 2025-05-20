@@ -15,10 +15,10 @@ load_dotenv()
 ACOUSTID_API_KEY = os.getenv("ACOUSTID_API_KEY")
 
 if not ACOUSTID_API_KEY:
-    print("🔑 Enter your AcoustID API key (or press Enter to skip fallback matching):")
+    print("Enter your AcoustID API key (or press Enter to skip fallback matching):")
     ACOUSTID_API_KEY = input("> ").strip()
     if not ACOUSTID_API_KEY:
-        print("⚠️  No API key provided. AcoustID fingerprinting will be skipped.\n")
+        print("No API key provided. AcoustID fingerprinting will be skipped.\n")
 
 def recognize_with_acoustid(mp3_path):
     try:
@@ -28,7 +28,7 @@ def recognize_with_acoustid(mp3_path):
                 print(f"🎵 Fingerprinted: {artist} - {title}")
                 return f"{artist} {title}"
     except Exception as e:
-        print(f"⚠️ AcoustID error for {mp3_path.name}: {e}")
+        print(f"AcoustID error for {mp3_path.name}: {e}")
     return None
 
 # Configure MusicBrainz
@@ -51,15 +51,15 @@ def search_album_art_musicbrainz(band_name, album_name):
     try:
         response = requests.get(query_url, headers=headers, verify=False)
         if response.status_code != 200:
-            print(f"❌ Failed to query MusicBrainz: {response.status_code}")
+            print(f"Failed to query MusicBrainz: {response.status_code}")
             return None
 
         releases = response.json().get("releases", [])
         if not releases:
-            print("❌ MusicBrainz: No matching releases found.")
+            print("MusicBrainz: No matching releases found.")
             return None
 
-        print(f"🎯 MusicBrainz returned {len(releases)} possible releases.")
+        print(f"MusicBrainz returned {len(releases)} possible releases.")
 
         for release in releases:
             release_id = release.get("id")
@@ -75,18 +75,18 @@ def search_album_art_musicbrainz(band_name, album_name):
                     images = art_resp.json().get("images", [])
                     for img in images:
                         if img.get("front"):
-                            print(f"✅ Found artwork for release: {title} by {artist} ({date})")
+                            print(f"Found artwork for release: {title} by {artist} ({date})")
                             return f"https://coverartarchive.org/release/{release_id}/front-500"
                 else:
-                    print(f"🚫 No artwork metadata for: {title} ({release_id})")
+                    print(f"No artwork metadata for: {title} ({release_id})")
             except Exception as e:
-                print(f"⚠️ Error checking artwork for {release_id}: {e}")
+                print(f"Error checking artwork for {release_id}: {e}")
 
-        print("❌ No releases with valid artwork found.")
+        print("No releases with valid artwork found.")
         return None
 
     except Exception as e:
-        print(f"❌ MusicBrainz query failed: {e}")
+        print(f"MusicBrainz query failed: {e}")
         return None
 
 import requests
@@ -109,37 +109,37 @@ def download_cover_from_musicbrainz_id(release_id, folder_path):
             for img in images:
                 if img.get("front"):
                     image_url = img.get("image")
-                    print(f"✅ Found cover image from metadata:\n{image_url}")
+                    print(f"Found cover image from metadata:\n{image_url}")
                     break
             else:
                 image_url = None
         else:
             image_url = None
     except Exception as e:
-        print(f"⚠️ Could not get metadata from Cover Art Archive: {e}")
+        print(f"Could not get metadata from Cover Art Archive: {e}")
         image_url = None
 
     # If no image found via metadata, try standard fallback
     if not image_url:
         image_url = f"https://coverartarchive.org/release/{release_id}/front-500"
-        print(f"🔁 Falling back to standard front-500 URL:\n{image_url}")
+        print(f"Falling back to standard front-500 URL:\n{image_url}")
 
     try:
         response = requests.get(image_url, headers=headers, verify=False)
         response.raise_for_status()
         image_data = response.content
     except Exception as e:
-        print(f"❌ Failed to download artwork: {e}")
+        print(f"Failed to download artwork: {e}")
         return
 
     # Embed into MP3 files
     folder = Path(folder_path)
     mp3_files = list(folder.rglob("*.mp3"))
     if not mp3_files:
-        print(f"🚫 No MP3 files found in {folder}")
+        print(f"No MP3 files found in {folder}")
         return
 
-    print(f"🎨 Embedding artwork into {len(mp3_files)} files in {folder.name}...")
+    print(f"Embedding artwork into {len(mp3_files)} files in {folder.name}...")
     for mp3 in mp3_files:
         embed_artwork(mp3, image_data, "")  # no artist check needed
 
@@ -151,7 +151,7 @@ def search_album_art(query, expected_artist=None):
         data = response.json()
 
         if data['resultCount'] == 0:
-            print("❌ No results found.")
+            print("No results found.")
             return None
 
         expected = expected_artist.lower() if expected_artist else None
@@ -159,14 +159,14 @@ def search_album_art(query, expected_artist=None):
         for result in data['results']:
             result_artist = result.get('artistName', '').lower()
             if expected and expected in result_artist:
-                print(f"✅ Found album: {result['collectionName']} by {result['artistName']}")
+                print(f"Found album: {result['collectionName']} by {result['artistName']}")
                 return result['artworkUrl100'].replace('100x100bb', '600x600bb')
 
-        print(f"❌ No album art found matching artist '{expected_artist}'.")
+        print(f"No album art found matching artist '{expected_artist}'.")
         return None  # no fallback to wrong artist!
 
     except Exception as e:
-        print(f"⚠️ Failed to search album art: {e}")
+        print(f"Failed to search album art: {e}")
         return None
 
 def download_image(url):
@@ -175,7 +175,7 @@ def download_image(url):
         r.raise_for_status()
         return r.content
     except Exception as e:
-        print(f"⚠️ Download failed: {e}")
+        print(f"Download failed: {e}")
         return None
 
 from pathlib import Path
@@ -184,19 +184,19 @@ def process_files_individually(root_path, band_name=None):
     root = Path(root_path)
     mp3_files = list(root.glob("*.mp3"))
     if not mp3_files:
-        print("🚫 No MP3 files found at top level of music folder.")
+        print("No MP3 files found at top level of music folder.")
         return
 
     for mp3 in mp3_files:
         base_name = mp3.stem.replace('_', ' ').replace('-', ' ')
         search_query = f"{band_name} {base_name}" if band_name else base_name
-        print(f"🔍 Searching for artwork using: {search_query}")
+        print(f"Searching for artwork using: {search_query}")
 
         album_art_url = search_album_art(search_query, expected_artist=band_name)
 
         # Fallback: use AcoustID fingerprinting
         if not album_art_url:
-            print("🔁 Fallback to AcoustID fingerprinting...")
+            print("Fallback to AcoustID fingerprinting...")
             album_info = recognize_with_acoustid(mp3)
             if album_info:
                 fallback_query = f"{band_name} {album_info}" if band_name else album_info
@@ -207,13 +207,13 @@ def process_files_individually(root_path, band_name=None):
             if art_data:
                 embed_artwork(mp3, art_data, band_name or "")
             else:
-                print(f"⚠️ Could not download image for {mp3.name}")
+                print(f"Could not download image for {mp3.name}")
         else:
-            print(f"❌ No artwork found for {mp3.name}")
+            print(f"No artwork found for {mp3.name}")
 
 def embed_artwork(mp3_path, image_data, band_name):
     if not image_data:
-        print(f"⚠️ No image data for {mp3_path.name}")
+        print(f"No image data for {mp3_path.name}")
         return
 
     try:
@@ -224,18 +224,18 @@ def embed_artwork(mp3_path, image_data, band_name):
 
         # If artwork is present and artist matches, skip
         if has_art and band_name.lower() in current_artist:
-            print(f"⏭️  Skipping (correct artwork already present): {mp3_path.name}")
+            print(f"Skipping (correct artwork already present): {mp3_path.name}")
             return
 
         # If artwork is present but artist tag is incorrect, replace
         if has_art and band_name.lower() not in current_artist:
-            print(f"♻️ Replacing potentially incorrect artwork in: {mp3_path.name}")
+            print(f"Replacing potentially incorrect artwork in: {mp3_path.name}")
 
         f['artwork'] = image_data
         f.save()
-        print(f"✅ Embedded artwork with music-tag: {mp3_path.name}")
+        print(f"Embedded artwork with music-tag: {mp3_path.name}")
     except Exception as e:
-        print(f"⚠️ music-tag failed on {mp3_path.name}, trying mutagen...")
+        print(f"music-tag failed on {mp3_path.name}, trying mutagen...")
 
         try:
             audio = MP3(mp3_path, ID3=ID3)
@@ -255,9 +255,9 @@ def embed_artwork(mp3_path, image_data, band_name):
                 )
             )
             audio.save()
-            print(f"✅ Embedded artwork with mutagen: {mp3_path.name}")
+            print(f"Embedded artwork with mutagen: {mp3_path.name}")
         except Exception as e2:
-            print(f"❌ Failed to embed artwork in {mp3_path.name}: {e2}")
+            print(f"Failed to embed artwork in {mp3_path.name}: {e2}")
 
 def clean_album_name(folder_name):
     # Step 1: Remove leading [YYYY]
@@ -275,10 +275,10 @@ def process_album_folder(folder_path, band_name):
     mp3_files = list(folder.rglob("*.mp3"))  # Recursive search in case of "CD 1", "CD 2", etc.
 
     if not mp3_files:
-        print(f"🚫 No MP3s in {folder.name}")
+        print(f"No MP3s in {folder.name}")
         return
 
-    print(f"\n📁 Processing folder: {folder.name}")
+    print(f"\n Processing folder: {folder.name}")
 
     album_name = clean_album_name(folder.name)
     search_query = f"{band_name} {album_name}"
@@ -288,12 +288,12 @@ def process_album_folder(folder_path, band_name):
 
     # Fallback 1: try MusicBrainz + Cover Art Archive
     if not album_art_url:
-        print("🎯 Trying MusicBrainz + Cover Art Archive...")
+        print("Trying MusicBrainz + Cover Art Archive...")
         album_art_url = search_album_art_musicbrainz(band_name, album_name)
 
     # Fallback 2: AcoustID (only if nothing else worked)
     if not album_art_url:
-        print("🔍 Using AcoustID fallback...")
+        print("Using AcoustID fallback...")
         album_info = recognize_with_acoustid(mp3_files[0])
         if album_info:
             fallback_query = f"{band_name} {album_info}"
@@ -306,9 +306,9 @@ def process_album_folder(folder_path, band_name):
             for mp3 in mp3_files:
                 embed_artwork(mp3, art_data, band_name)
         else:
-            print("⚠️ Could not download album art.")
+            print("Could not download album art.")
     else:
-        print("❌ No album art found.")
+        print("No album art found.")
 
 def clean_album_art(root_path, album_title):
     root = Path(root_path)
@@ -316,7 +316,7 @@ def clean_album_art(root_path, album_title):
 
     for folder in root.iterdir():
         if folder.is_dir() and normalized_target in clean_album_name(folder.name).lower():
-            print(f"\n🧹 Cleaning artwork in album: {folder.name}")
+            print(f"\n Cleaning artwork in album: {folder.name}")
             mp3_files = list(folder.rglob("*.mp3"))
             for mp3 in mp3_files:
                 try:
@@ -324,11 +324,11 @@ def clean_album_art(root_path, album_title):
                     if audio.tags:
                         audio.tags.delall("APIC")
                         audio.save()
-                        print(f"✅ Removed artwork: {mp3.name}")
+                        print(f"Removed artwork: {mp3.name}")
                     else:
-                        print(f"⏭️  No tags found in: {mp3.name}")
+                        print(f"No tags found in: {mp3.name}")
                 except Exception as e:
-                    print(f"❌ Failed to clean artwork in {mp3.name}: {e}")
+                    print(f"Failed to clean artwork in {mp3.name}: {e}")
 
 def process_all_folders(root_path, band_name, target_album=None):
     root = Path(root_path)
@@ -354,12 +354,12 @@ def main():
     args = parser.parse_args()
 
     if args.folders and not args.band:
-        print("❌ The --band option is required when using --folders.")
+        print("The --band option is required when using --folders.")
         exit(1)
 
     if args.brainz:
         if not args.album:
-            print("❌ Please provide --album along with --brainz.")
+            print("Please provide --album along with --brainz.")
             exit(1)
     
         album_target = args.album.lower().strip()
@@ -371,7 +371,7 @@ def main():
                     download_cover_from_musicbrainz_id(args.brainz, folder)
                     break
         else:
-            print(f"❌ Album '{args.album}' not found in {args.music_folder}")
+            print(f"Album '{args.album}' not found in {args.music_folder}")
             exit(1)
     
     elif args.clean_album:
@@ -381,7 +381,7 @@ def main():
     elif args.folders:
         process_all_folders(args.music_folder, args.band, target_album=args.album)
     else:
-        print("❌ Please specify --folders or --files.")
+        print("Please specify --folders or --files.")
 
 if __name__ == "__main__":
     main()
