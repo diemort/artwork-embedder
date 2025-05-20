@@ -6,15 +6,23 @@ APIKEY="${APIKEY:-}"
 
 # Use existing APIKEY or prompt the user
 if [ -z "$APIKEY" ]; then
-    read -p "🔑 Enter your AcoustID API key: " APIKEY
+    read -p "🔑 Enter your AcoustID API key (press Enter to skip): " APIKEY
     if [ -z "$APIKEY" ]; then
-        echo "❌ API key cannot be empty."
-        exit 1
+        echo "⚠️  No API key provided. AcoustID fallback will be disabled."
+        echo "    You can add your key later to the .env file:"
+        echo "    ACOUSTID_API_KEY=\"your-key-here\""
+    else
+        echo "🔐 API key entered."
+        echo "ACOUSTID_API_KEY=\"$APIKEY\"" > .env
+        echo "✅ API key saved to .env"
     fi
 else
     echo "🔐 Using provided API key."
+    echo "ACOUSTID_API_KEY=\"$APIKEY\"" > .env
+    echo "✅ API key saved to .env"
 fi
 
+echo ""
 echo "🔧 Setting up environment: $ENV_NAME"
 
 # Detect OS
