@@ -28,6 +28,25 @@ To process all albums in a music directory and embed album art using both iTunes
 python3 embed_artwork.py --music-folder "<path-to-folder>" --band "<band-name>"
 ```
 
+If you already know the MusicBrainz release ID for a specific album, you can bypass iTunes and metadata matching by directly embedding the artwork from the Cover Art Archive.
+
+This is useful for:
+	•	Ensuring accurate artwork for a specific release version
+	•	Handling edge cases where iTunes or MusicBrainz search returns incorrect results
+
+```python
+python3 embed_artwork.py --music-folder "<path-to-albums>" \
+                         --album "<album-name>" \
+                         --brainz "<musicbrainz-release-id>"
+```
+
+This will:
+	•	Locate the folder inside `--music-folder` whose name matches `--album` (ignoring leading years or tags)
+	•	Download the artwork for the given MusicBrainz release ID
+	•	Embed the cover into all .mp3 files inside that album folder
+
+This option is ideal when you want full control over the exact release version being tagged.
+
 ## Clean existing artwork
 
 To remove existing album art from MP3s in a given album folder:
