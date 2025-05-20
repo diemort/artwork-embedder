@@ -13,8 +13,12 @@ import musicbrainzngs
 # Load API key from .env
 load_dotenv()
 ACOUSTID_API_KEY = os.getenv("ACOUSTID_API_KEY")
+
 if not ACOUSTID_API_KEY:
-    ACOUSTID_API_KEY = input("🔑 Enter your AcoustID API key: ")
+    print("🔑 Enter your AcoustID API key (or press Enter to skip fallback matching):")
+    ACOUSTID_API_KEY = input("> ").strip()
+    if not ACOUSTID_API_KEY:
+        print("⚠️  No API key provided. AcoustID fingerprinting will be skipped.\n")
 
 def recognize_with_acoustid(mp3_path):
     try:
@@ -174,6 +178,39 @@ def download_image(url):
         print(f"⚠️ Download failed: {e}")
         return None
 
+from pathlib import Path
+
+def process_files_individually(root_path, band_name=None):
+    root = Path(root_path)
+    mp3_files = list(root.glob("*.mp3"))
+    if not mp3_files:
+        print("🚫 No MP3 files found at top level of music folder.")
+        return
+
+    for mp3 in mp3_files:
+        base_name = mp3.stem.replace('_', ' ').replace('-', ' ')
+        search_query = f"{band_name} {base_name}" if band_name else base_name
+        print(f"🔍 Searching for artwork using: {search_query}")
+
+        album_art_url = search_album_art(search_query, expected_artist=band_name)
+
+        # Fallback: use AcoustID fingerprinting
+        if not album_art_url:
+            print("🔁 Fallback to AcoustID fingerprinting...")
+            album_info = recognize_with_acoustid(mp3)
+            if album_info:
+                fallback_query = f"{band_name} {album_info}" if band_name else album_info
+                album_art_url = search_album_art(fallback_query)
+
+        if album_art_url:
+            art_data = download_image(album_art_url)
+            if art_data:
+                embed_artwork(mp3, art_data, band_name or "")
+            else:
+                print(f"⚠️ Could not download image for {mp3.name}")
+        else:
+            print(f"❌ No artwork found for {mp3.name}")
+
 def embed_artwork(mp3_path, image_data, band_name):
     if not image_data:
         print(f"⚠️ No image data for {mp3_path.name}")
@@ -310,8 +347,15 @@ def main():
     parser.add_argument("--album", type=str, help="Only update artwork for this specific album (matches folder name).")
     parser.add_argument("--clean-album", type=str, help="Album name to clean (removes embedded artwork).")
     parser.add_argument("--brainz", type=str, help="MusicBrainz release ID to embed artwork directly from Cover Art Archive.")
+    mode_group = parser.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument("--folders", action="store_true", help="Process album subfolders inside the music folder.")
+    mode_group.add_argument("--files", action="store_true", help="Process individual MP3 files in the music folder.")
 
     args = parser.parse_args()
+
+    if args.folders and not args.band:
+        print("❌ The --band option is required when using --folders.")
+        exit(1)
 
     if args.brainz:
         if not args.album:
@@ -332,12 +376,12 @@ def main():
     
     elif args.clean_album:
         clean_album_art(args.music_folder, args.clean_album)
-    
-    elif args.band:
+    elif args.files:
+        process_files_individually(args.music_folder, band_name=args.band)
+    elif args.folders:
         process_all_folders(args.music_folder, args.band, target_album=args.album)
-    
     else:
-        print("❌ Please provide --band for embedding, --clean-album for cleaning, or --brainz with --album for MusicBrainz embedding.")
+        print("❌ Please specify --folders or --files.")
 
 if __name__ == "__main__":
     main()
