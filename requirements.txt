@@ -1,0 +1,7 @@
+pyacoustid
+mutagen
+requests
+music-tag
+tinytag
+python-dotenv
+musicbrainzngs
