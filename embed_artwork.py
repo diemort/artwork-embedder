@@ -342,11 +342,21 @@ def process_all_folders(root_path, band_name, target_album=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Embed or clean album art in MP3 files.")
-    parser.add_argument("--music-folder", type=str, required=True, help="Path to folder with album subfolders.")
-    parser.add_argument("--band", type=str, help="Band name for album art search (used when embedding).")
-    parser.add_argument("--album", type=str, help="Only update artwork for this specific album (matches folder name).")
-    parser.add_argument("--clean-album", type=str, help="Album name to clean (removes embedded artwork).")
-    parser.add_argument("--brainz", type=str, help="MusicBrainz release ID to embed artwork directly from Cover Art Archive.")
+    parser.add_argument("--music-folder", type=str, required=True,
+                    metavar='"MUSIC_FOLDER"',
+                    help='Path to folder with album subfolders (use quotes if path contains spaces).')
+    parser.add_argument("--band", type=str,
+                    metavar='"BAND"',
+                    help='Band name for album art search (used when embedding).')
+    parser.add_argument("--album", type=str,
+                    metavar='"ALBUM"',
+                    help='Only update artwork for this specific album (matches folder name).')
+    parser.add_argument("--clean-album", type=str,
+                    metavar='"CLEAN_ALBUM"',
+                    help='Album name to clean (removes embedded artwork).')
+    parser.add_argument("--brainz", type=str,
+                    metavar='"BRAINZ_RELEASE_ID"',
+                    help='MusicBrainz release ID to embed artwork directly from Cover Art Archive.')
     mode_group = parser.add_mutually_exclusive_group(required=True)
     mode_group.add_argument("--folders", action="store_true", help="Process album subfolders inside the music folder.")
     mode_group.add_argument("--files", action="store_true", help="Process individual MP3 files in the music folder.")
