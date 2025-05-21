@@ -2,6 +2,7 @@ import acoustid
 import os
 import argparse
 from dotenv import load_dotenv
+import pprint
 
 # Load API key from .env if available
 load_dotenv()
@@ -49,11 +50,16 @@ try:
     if not matches:
         print("No matches found.")
     else:
-        print(f"Top match:")
-        for recording in matches[0].get("recordings", []):
-            title = recording.get("title", "Unknown title")
-            artists = recording.get("artists", [])
-            artist_names = ", ".join(a['name'] for a in artists) if artists else "Unknown artist"
-            print(f"{artist_names} - {title}")
+        print("Top match:")
+        recordings = matches[0].get("recordings", [])
+        if not recordings:
+            print("No recordings linked to this AcoustID result.")
+        else:
+            for recording in recordings:
+                title = recording.get("title", "Unknown title")
+                artists = recording.get("artists", [])
+                artist_names = ", ".join(a['name'] for a in artists) if artists else "Unknown artist"
+                print(f"{artist_names} - {title}")
+                pprint.pprint(matches[0])
 except Exception as e:
     print(f"AcoustID request failed: {e}")
