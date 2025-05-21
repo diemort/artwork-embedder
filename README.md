@@ -64,3 +64,7 @@ python3 test_art_sources.py --band "The Beatles" --album "Yellow Submarine"
 ```
 
 This returns a list of matching releases and indicates whether artwork is available for each.
+
+The mp3 file _Uplifting Era_ of Optimistic Big Band is freely available at:
+
+https://pixabay.com/pt/music/otimista-optimistic-big-band-uplifting-era-337455/
