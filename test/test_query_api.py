@@ -15,10 +15,10 @@ headers = {
 }
 
 # ============================
-# 🎯 MUSICBRAINZ TEST
+# MUSICBRAINZ TEST
 # ============================
 
-print(f"\n🔍 Querying MusicBrainz for '{artist} - {album}'...\n")
+print(f"\nQuerying MusicBrainz for '{artist} - {album}'...\n")
 
 query_url = (
     f"https://musicbrainz.org/ws/2/release/?query=release:\"{album}\"%20AND%20artist:\"{artist}\""
@@ -29,15 +29,15 @@ try:
     response = requests.get(query_url, headers=headers, verify=False)
     response.raise_for_status()
 except Exception as e:
-    print(f"❌ MusicBrainz Error: {e}")
+    print(f"MusicBrainz Error: {e}")
     exit()
 
 releases = response.json().get("releases", [])
 
 if not releases:
-    print("❌ No MusicBrainz releases found.")
+    print("No MusicBrainz releases found.")
 else:
-    print(f"✅ Found {len(releases)} MusicBrainz releases:\n")
+    print(f"Found {len(releases)} MusicBrainz releases:\n")
     for r in releases:
         title = r.get("title", "N/A")
         date = r.get("date", "Unknown")
@@ -58,16 +58,16 @@ else:
         except Exception:
             has_art = False
 
-        art_status = "🎨 Artwork Available" if has_art else "🚫 No Artwork"
-        print(f"🎵 {title} ({date}) [{country}] — {label}")
-        print(f"   🔗 https://musicbrainz.org/release/{release_id}")
-        print(f"   🖼️  {art_status}\n")
+        art_status = "Artwork Available" if has_art else "No Artwork"
+        print(f"{title} ({date}) [{country}] — {label}")
+        print(f"    https://musicbrainz.org/release/{release_id}")
+        print(f"    {art_status}\n")
 
 # ============================
-# 🍏 iTUNES TEST
+# iTUNES TEST
 # ============================
 
-print(f"\n🍏 Querying iTunes for '{artist} - {album}'...\n")
+print(f"\nQuerying iTunes for '{artist} - {album}'...\n")
 
 itunes_url = f"https://itunes.apple.com/search?term={requests.utils.quote(artist + ' ' + album)}&media=music&entity=album&limit=10"
 
@@ -75,14 +75,14 @@ try:
     itunes_response = requests.get(itunes_url)
     itunes_response.raise_for_status()
 except Exception as e:
-    print(f"❌ iTunes Error: {e}")
+    print(f"iTunes Error: {e}")
     exit()
 
 itunes_data = itunes_response.json()
 results = itunes_data.get("results", [])
 
 if not results:
-    print("❌ No iTunes results found.")
+    print("No iTunes results found.")
 else:
     found = False
     for result in results:
@@ -90,10 +90,10 @@ else:
         r_album = result.get("collectionName", "")
         if artist.lower() in r_artist:
             artwork_url = result.get("artworkUrl100", "").replace("100x100bb", "600x600bb")
-            print(f"🎵 {r_album} — by {result['artistName']}")
-            print(f"   🖼️  Artwork URL: {artwork_url}\n")
+            print(f"{r_album} — by {result['artistName']}")
+            print(f"    Artwork URL: {artwork_url}\n")
             found = True
 
     if not found:
-        print("⚠️ iTunes returned results, but none matched the expected artist.")
+        print("iTunes returned results, but none matched the expected artist.")
 
