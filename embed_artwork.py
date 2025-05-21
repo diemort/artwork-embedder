@@ -278,7 +278,7 @@ def process_album_folder(folder_path, band_name):
         print(f"No MP3s in {folder.name}")
         return
 
-    print(f"\n Processing folder: {folder.name}")
+    print(f"\nProcessing folder: {folder.name}")
 
     album_name = clean_album_name(folder.name)
     search_query = f"{band_name} {album_name}"
