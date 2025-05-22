@@ -1,133 +1,75 @@
 #!/bin/bash
 
-# Define environment name and pause-on-error helper
-ENV_NAME="mp3tagger-env"
-APIKEY="${APIKEY:-}"
+# setup_mp3_env.sh
+# Sets up the virtual environment and installs requirements for the artwork-embedder Python module
 
-pause_exit() {
-    echo ""
-    read -p "Press Enter to exit..."
+ENV_NAME="mp3tagger-env"
+PYTHON_REQUIRED="3.12"
+REQUIREMENTS_FILE="requirements.txt"
+
+# Check Python version
+PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+if [[ "$PYTHON_VERSION" != "$PYTHON_REQUIRED" ]]; then
+    echo "❌ Python $PYTHON_REQUIRED is required. Found Python $PYTHON_VERSION."
+    echo "Please install Python $PYTHON_REQUIRED and try again."
     exit 1
-}
+fi
 
 # Prompt for AcoustID API key
+APIKEY="${APIKEY:-}"
 if [ -z "$APIKEY" ]; then
-    read -p "Enter your AcoustID API key (press Enter to skip): " APIKEY
+    read -p "Enter your AcoustID API key (or press Enter to skip): " APIKEY
     if [ -z "$APIKEY" ]; then
-        echo "No API key provided. AcoustID fallback will be disabled."
-        echo "You can add it later to the .env file like this:"
-        echo 'ACOUSTID_API_KEY="your-key-here"'
+        echo "No API key entered. You can manually edit .env later."
+    else
+        echo "ACOUSTID_API_KEY=\"$APIKEY\"" > .env
+        echo "API key saved to .env"
     fi
-fi
-
-# Save API key to .env
-echo "ACOUSTID_API_KEY=\"$APIKEY\"" > .env
-echo "Saved API key to .env"
-
-echo ""
-echo "Setting up environment: $ENV_NAME"
-
-# Detect platform
-OS_TYPE=$(uname)
-case "$OS_TYPE" in
-    Darwin)
-        PLATFORM="macOS"
-        ;;
-    Linux)
-        if grep -qi microsoft /proc/version 2>/dev/null; then
-            PLATFORM="WSL"
-        else
-            PLATFORM="Linux"
-        fi
-        ;;
-    MINGW*|MSYS*|CYGWIN*)
-        PLATFORM="Windows"
-        ;;
-    *)
-        echo "Unsupported OS: $OS_TYPE"
-        pause_exit
-        ;;
-esac
-
-echo "Detected platform: $PLATFORM"
-
-# Check for Python 3.12
-if command -v python3.12 &> /dev/null; then
-    PYTHON_BIN=$(command -v python3.12)
 else
-    echo "Python 3.12 is not installed."
-    case "$PLATFORM" in
-        macOS)
-            echo "Install with: brew install python@3.12"
-            ;;
-        Linux|WSL)
-            echo "Install with: sudo apt install python3.12"
-            ;;
-        Windows)
-            echo "Download from: https://www.python.org/downloads/windows/"
-            ;;
-    esac
-    pause_exit
+    echo "ACOUSTID_API_KEY=\"$APIKEY\"" > .env
+    echo "API key saved to .env"
 fi
 
-PY_VERSION=$($PYTHON_BIN -V)
-echo "Using $PY_VERSION"
-
-# Check for chromaprint (fpcalc)
+# Detect OS and install fpcalc if not available
 if ! command -v fpcalc &> /dev/null; then
-    echo "Installing chromaprint (fpcalc)..."
-    case "$PLATFORM" in
-        macOS)
+    OS_TYPE=$(uname)
+    case "$OS_TYPE" in
+        Darwin)
+            echo "Installing Chromaprint via Homebrew..."
             if ! command -v brew &> /dev/null; then
-                echo "Homebrew not found. Please install it from https://brew.sh"
-                pause_exit
+                echo "Homebrew not found. Please install it: https://brew.sh"
+                exit 1
             fi
             brew install chromaprint
             ;;
-        Linux|WSL)
+        Linux)
+            echo "Installing Chromaprint via APT..."
             sudo apt update && sudo apt install -y chromaprint
             ;;
-        Windows)
-            echo "Please install Chromaprint manually:"
-            echo "https://acoustid.org/chromaprint"
-            pause_exit
+        *)
+            echo "Unsupported OS: $OS_TYPE"
+            exit 1
             ;;
     esac
 else
-    echo "chromaprint (fpcalc) already installed."
+    echo "Chromaprint (fpcalc) is already installed."
 fi
 
-# Create virtual environment
+# Create virtual environment if it doesn't exist
 if [ ! -d "$ENV_NAME" ]; then
-    echo "Creating Python 3.12 virtual environment..."
-    "$PYTHON_BIN" -m venv "$ENV_NAME"
-else
-    echo "Virtual environment already exists."
+    echo "Creating virtual environment: $ENV_NAME"
+    python3 -m venv "$ENV_NAME"
 fi
 
-# Activate virtual environment
-if [ -f "$ENV_NAME/bin/activate" ]; then
-    source "$ENV_NAME/bin/activate"
-else
-    echo "Could not activate the virtual environment."
-    pause_exit
-fi
+# Activate the virtual environment
+source "$ENV_NAME/bin/activate"
 
-# Upgrade pip
-echo "Upgrading pip..."
+# Upgrade pip and install dependencies
+echo "Installing Python requirements..."
 pip install --upgrade pip
+pip install -r "$REQUIREMENTS_FILE"
 
-# Check for requirements.txt
-if [ ! -f requirements.txt ]; then
-    echo "Missing requirements.txt file."
-    pause_exit
-fi
+# Done
+echo "Setup complete. To activate your environment later, run:"
+echo "source $ENV_NAME/bin/activate"
 
-# Install Python dependencies
-echo "Installing Python dependencies..."
-pip install -r requirements.txt
-
-echo ""
-echo "Setup complete."
-echo "To activate the environment later, run:"
-echo "source \"$ENV_NAME/bin/activate\""
