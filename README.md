@@ -1,103 +1,134 @@
-# Artwork Embedder
 
-A tool to search **iTunes** and **MusicBrainz** for album releases and automatically embed album artwork into the ID3 tags of MP3 files.
+# 🎵 artwork-embedder
 
-The script loops over folders inside the specified `--music-folder`, using the folder name as the album title (while ignoring leading dates or suffixes like disc numbers or tags).
+Embed album artwork in MP3 files using iTunes, MusicBrainz, and AcoustID. Supports both bulk processing of folders and individual file tagging.
 
 ---
 
-## Setup
+## 📦 Features
 
-All required Python packages and system dependencies can be installed using:
+- Search for album artwork from:
+  - **iTunes API**
+  - **MusicBrainz + Cover Art Archive**
+  - **AcoustID** fallback (requires API key)
+- Embed artwork using:
+  - `music-tag` (preferred)
+  - `mutagen` (fallback)
+- Clean embedded artwork from MP3 files
+- CLI support for batch folder and file processing
+- Compatible with macOS, Linux, and WSL
 
-```bash
-bash setup_mp3_env.sh
-```
+---
 
-The script detects your operating system and installs chromaprint, fpcalc, and the required Python modules in a virtual environment.
+## 📁 Installation & Setup
 
-You’ll need an AcoustID API key if you want to enable audio fingerprint fallback. You can either:
-	•	Add it directly to the top of the setup script (APIKEY=...)
-	•	Or input it interactively when prompted.
- 
-## Usage
+### Requirements
 
-To process all albums in a music directory and embed album art using both iTunes and MusicBrainz:
+- Python 3.12.x
+- ffmpeg (for `fpcalc` via chromaprint)
+- An AcoustID API key (for optional fingerprinting support)
 
-```python
-python3 embed_artwork.py --music-folder "<path-to-folder>" --band "<band-name>"
-```
-
-If you already know the MusicBrainz release ID for a specific album, you can bypass iTunes and metadata matching by directly embedding the artwork from the Cover Art Archive.
-
-This is useful for:
-	•	Ensuring accurate artwork for a specific release version
-	•	Handling edge cases where iTunes or MusicBrainz search returns incorrect results
-
-```python
-python3 embed_artwork.py --music-folder "<path-to-albums>" \
-                         --album "<album-name>" \
-                         --brainz "<musicbrainz-release-id>"
-```
-
-This will:
-	•	Locate the folder inside `--music-folder` whose name matches `--album` (ignoring leading years or tags)
-	•	Download the artwork for the given MusicBrainz release ID
-	•	Embed the cover into all .mp3 files inside that album folder
-
-This option is ideal when you want full control over the exact release version being tagged.
-
-## Clean existing artwork
-
-To remove existing album art from MP3s in a given album folder:
-
-```python
-python3 embed_artwork.py --music-folder "<path-to-folder>" --band "<band-name>"
-```
-
-## Test Mode (iTunes, MusicBrainz & Embed Functionality)
-
-This project includes automated tests for verifying artwork embedding logic using freely available MP3s.
-
-### 1. Search Metadata Only
-
-Use the following script to preview album metadata and check if artwork is available on both iTunes and MusicBrainz:
+### 1. Clone the repository
 
 ```bash
-python3 test_query_api.py --band "Cosmonkey" --album "Rainy"
-```
+git clone https://github.com/your-username/artwork-embedder.git
+cd artwork-embedder
 
-This returns a list of matching releases and indicates whether artwork is available for each.
+2. Create a virtual environment
 
-2. Full Embed Test (All Modes)
+python3.12 -m venv mp3tagger-env
+source mp3tagger-env/bin/activate
 
-The `test_embed_run.py` script runs all embedding modes:
-	•	1a. Folder-based search via iTunes
-	•	1b. Folder-based fallback via MusicBrainz
-	•	2. Single file via fallback (no AcoustID)
+3. Install requirements
 
-To run all test modes:
+pip install -r requirements.txt
 
-```python
-python3 test_embed_run.py
-```
+4. Set AcoustID API key (optional)
 
-This will:
-	•	Use the local test MP3 file `Cosmonkey-Rainy.mp3` (must be in the same folder)
-	•	Copy it to test folders
-	•	Attempt to embed artwork using the actual logic in `embed_artwork.py`
+Register at https://acoustid.org/api-key and create a .env file:
 
-Each mode checks for:
-	•	Metadata match
-	•	Successful download of artwork
-	•	Valid embedding using music-tag or mutagen
+ACOUSTID_API_KEY="your-api-key-here"
 
-Test File
 
-The MP3 file used in tests is:
+⸻
 
-🎵 Cosmonkey – Rainy
+🚀 Usage
 
-Make sure Cosmonkey-Rainy.mp3 is present in the same directory as the test scripts.
+Run the CLI via:
 
-This track is freely available for download and use. It was originally obtained via YouTube, but you may substitute any valid MP3 if needed.
+python -m artwork_embedder.cli --music-folder "./albums" --band "Radiohead" --folders
+
+Options
+
+Option	Description
+--music-folder	Path to folder with MP3s or album subfolders
+--band	Name of the band or artist
+--album	Only process the given album name
+--clean-album	Remove artwork from the specified album
+--brainz	Embed artwork directly from MusicBrainz release ID
+--folders	Loop over subfolders (for album processing)
+--files	Process individual MP3 files (top-level only)
+
+
+⸻
+
+🧪 Test Mode
+
+Use the provided test suite to simulate all modes of operation:
+
+python3 test/test_embed_run.py
+
+This script will:
+	•	Copy the MP3 file Cosmonkey-Rainy.mp3 into test folders
+	•	Run embedding using:
+	•	Folder/iTunes match
+	•	Folder/MusicBrainz match
+	•	File/AcoustID fallback
+	•	Print a final summary report
+
+File required:
+Make sure Cosmonkey-Rainy.mp3 is placed in the root test/ directory.
+
+⸻
+
+🧱 Project Structure
+
+artwork_embedder/
+├── __init__.py
+├── cli.py               # CLI interface
+├── embed.py             # Embed/Clean logic
+├── itunes_utils.py      # iTunes search logic
+├── musicbrainz_utils.py # MusicBrainz + Cover Art logic
+├── acoustid_utils.py    # AcoustID fingerprint recognition
+├── utils.py             # Common helpers (image download, name cleanup)
+
+
+⸻
+
+📘 Documentation
+
+Each module contains clear docstrings for easy documentation generation. You can use tools like pdoc, mkdocs, or Sphinx to build HTML/Markdown docs.
+
+⸻
+
+✅ Example Commands
+
+# Embed artwork for each subfolder
+python -m artwork_embedder.cli --music-folder "albums/" --band "The Beatles" --folders
+
+# Clean artwork from one album
+python -m artwork_embedder.cli --music-folder "albums/" --clean-album "Abbey Road"
+
+# Embed artwork using MusicBrainz release ID
+python -m artwork_embedder.cli --music-folder "albums/" --album "OK Computer" --brainz abc123 --folders
+
+# Process individual files using AcoustID
+python -m artwork_embedder.cli --music-folder "singles/" --band "Coldplay" --files
+
+
+⸻
+
+📄 License
+
+MIT License. Free to use and distribute with attribution.
+
