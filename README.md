@@ -55,16 +55,49 @@ To remove existing album art from MP3s in a given album folder:
 python3 embed_artwork.py --music-folder "<path-to-folder>" --band "<band-name>"
 ```
 
-## Test Mode (iTunes + MusicBrainz Search Preview)
+## Test Mode (iTunes, MusicBrainz & Embed Functionality)
 
-Use the included test script to preview album metadata and check if artwork is available on both iTunes and MusicBrainz:
+This project includes automated tests for verifying artwork embedding logic using freely available MP3s.
 
-```python
-python3 test_art_sources.py --band "The Beatles" --album "Yellow Submarine"
+### 1. Search Metadata Only
+
+Use the following script to preview album metadata and check if artwork is available on both iTunes and MusicBrainz:
+
+```bash
+python3 test_query_api.py --band "Cosmonkey" --album "Rainy"
 ```
 
 This returns a list of matching releases and indicates whether artwork is available for each.
 
-The mp3 file _Uplifting Era_ of Optimistic Big Band is freely available at:
+2. Full Embed Test (All Modes)
 
-https://pixabay.com/pt/music/otimista-optimistic-big-band-uplifting-era-337455/
+The `test_embed_run.py` script runs all embedding modes:
+	•	1a. Folder-based search via iTunes
+	•	1b. Folder-based fallback via MusicBrainz
+	•	2. Single file via fallback (no AcoustID)
+
+To run all test modes:
+
+```python
+python3 test_embed_run.py
+```
+
+This will:
+	•	Use the local test MP3 file `Cosmonkey-Rainy.mp3` (must be in the same folder)
+	•	Copy it to test folders
+	•	Attempt to embed artwork using the actual logic in `embed_artwork.py`
+
+Each mode checks for:
+	•	Metadata match
+	•	Successful download of artwork
+	•	Valid embedding using music-tag or mutagen
+
+Test File
+
+The MP3 file used in tests is:
+
+🎵 Cosmonkey – Rainy
+
+Make sure Cosmonkey-Rainy.mp3 is present in the same directory as the test scripts.
+
+This track is freely available for download and use. It was originally obtained via YouTube, but you may substitute any valid MP3 if needed.
